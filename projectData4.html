@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            body{
+                text-align: center;
+            }
+            
+        </style>
+        <script src="https://d3js.org/d3.v5.js"></script>
+        <script src="https://d3js.org/topojson.v2.min.js"></script>
+    </head>
+    <body>
+        <h1 id="title">United States Educational Attainment</h1>
+        <h2 id="description">Percentage of adults age 25 and older with a bachelor's degree or higher (2010-2014)</h2>
+        <script>
+            const EDU_FILE = "https://cdn.freecodecamp.org/testable-projects-fcc/data/choropleth_map/for_user_education.json";
+            const COUNTY_FILE = "https://cdn.freecodecamp.org/testable-projects-fcc/data/choropleth_map/counties.json"
+
+
+        const w = 1000;
+        const h = 800;
+        const path = d3.geoPath();
+        const legend = d3.select("body")
+                        .append("svg")
+                        .attr("width",w)
+                        .attr("height",50)
+                        .attr("id","legend")
+        const svg = d3.select("body")
+                    .append("svg")
+                    .attr("width",w)
+                    .attr("height",h)
+        
+        const color = [{percent: 66, col:"rgb(24, 247, 15)"},
+                        {percent: 57, col:"rgb(83, 247, 77)"},
+                        {percent: 48, col:"rgb(27, 87, 24)"},
+                        {percent: 39, col:"rgb(125, 224, 79)"},
+                        {percent: 30, col:"rgb(143, 224, 105)"},
+                        {percent: 21, col:"rgb(166, 232, 135)"},
+                        {percent: 12, col:"rgb(207, 242, 206)"},
+                        {percent: 0, col:"rgb(207, 242, 206)"}]
+        legend.selectAll("rect")
+                .data(color)
+                .enter()
+                .append("rect")
+                .attr("height",10)
+                .attr("width",30)
+                .attr("x",(d,i) => 30*i)
+                .attr("y",40)
+                .style("fill", d => d.col)
+        
+        legend.selectAll("text")
+                .data(color)
+                .enter()
+                .append("text")
+                .attr("x",(d,i) => 30*i)
+                .attr("y",15)
+                .text(d => "> "+ d.percent)
+                .style("font-size",15)
+
+        var div = d3.select("body").append("div").
+        attr("class", "tooltip").
+        attr("id", "tooltip").
+        style("opacity", 0);
+        fetch(COUNTY_FILE).then(response => response.json()).then(data => {
+            const countiesUS = data;
+            fetch(EDU_FILE).then(responses => responses.json()).then(datas => {
+                const eduData = datas;
+                svg.append("g")
+                    .selectAll("path")
+                    .data(topojson.feature(countiesUS, countiesUS.objects.counties).features)
+                    .enter()
+                    .append("path")
+                    .attr("class","county")
+                    .attr("data-fips",d => d.id)
+                    .attr("d",path)
+                    .attr("data-education", d => {
+                        var result = eduData.filter(obj => obj.fips == d.id)
+                        if(result[0]){
+                        return result[0].bachelorsOrHigher
+        }
+                    })
+                    .style("fill", (d) => {
+                        var result = eduData.filter(obj => obj.fips == d.id)
+                        
+                        if(result[0].bachelorsOrHigher >= 66){
+                            return "rgb(24, 247, 15)"
+                        }
+                        else if(result[0].bachelorsOrHigher >= 57){
+                            return "rgb(83, 247, 77)"
+                        }
+                        else if(result[0].bachelorsOrHigher >= 48){
+                            return "rgb(27, 87, 24)"
+                        }
+                        else if(result[0].bachelorsOrHigher >= 39){
+                            return "rgb(125, 224, 79)"
+                        }
+                        else if(result[0].bachelorsOrHigher >= 30){
+                            return "rgb(143, 224, 105)"
+                        }
+                        else if(result[0].bachelorsOrHigher >= 21){
+                            return "rgb(166, 232, 135)"
+                        }
+                        else if(result[0].bachelorsOrHigher >= 12) {
+                            return "rgb(191, 242, 189)"
+                        }
+                        else {
+                            return "rgb(207, 242, 206)"
+                        }
+                    })
+                    .on("mouseover", d => {
+                        var result = eduData.filter(obj => obj.fips == d.id)
+                        div.style("opacity", .9);
+                        div.attr("data-education",result[0].bachelorsOrHigher)
+                        div.html("State: " + result[0].state + "\nName: " + result[0].area_name +"\nBachelors or Higher: " +result[0].bachelorsOrHigher)
+                        
+                })
+                    .on("mouseout", function (d) {
+                    div.style("opacity", 0);
+                     })
+                    .append("title")
+                    .text(d => {
+                        var result = eduData.filter(obj => obj.fips == d.id)
+                        return "State: " + result[0].state + "\nName: " + result[0].area_name +"\nBachelors or Higher: " +result[0].bachelorsOrHigher;
+                    })
+            })
+        })
+        </script>
+        <p>Created by <a href="https://www.linkedin.com/in/duc-pham-068092178/">Duc Pham</a></p>
+        <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+    </body>
+</html>
